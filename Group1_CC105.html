@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance Monitoring System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+        :root {
+            --black: #000000;
+            --grey-95: #0d0d0d;
+            --grey-90: #1a1a1a;
+            --grey-85: #262626;
+            --grey-80: #333333;
+            --grey-75: #404040;
+            --grey-70: #4d4d4d;
+            --grey-60: #666666;
+            --grey-50: #808080;
+            --grey-40: #999999;
+            --grey-30: #b3b3b3;
+            --grey-20: #cccccc;
+            --grey-15: #d9d9d9;
+            --grey-10: #e6e6e6;
+            --grey-05: #f2f2f2;
+            --white: #ffffff;
+            
+            --present: #1e7b3a;
+            --present-dark: #165c2b;
+            --present-light: #259647;
+            --late: #b36b00;
+            --late-dark: #8c5400;
+            --late-light: #d47d00;
+            --absent: #991a1a;
+            --absent-dark: #731414;
+            --absent-light: #b82020;
+            --excused: #2a60b0;
+            --excused-dark: #1f4887;
+            --excused-light: #3a7cd6;
+            --accent-blue: #2a60b0;
+            --accent-blue-dark: #1f4887;
+        }
+        body {
+            padding: 24px;
+            background: linear-gradient(135deg, var(--grey-95) 0%, var(--grey-85) 100%);
+            color: var(--grey-10);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+        .hidden { display: none !important; }
+        .container {
+            max-width: 1050px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, var(--grey-80) 0%, var(--grey-85) 100%);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow:
+                0 10px 40px rgba(0,0,0,0.6),
+                inset 0 1px 0 rgba(255,255,255,0.05);
+            border: 1px solid var(--grey-70);
+            position: relative;
+            overflow: hidden;
+        }
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--present), var(--late), var(--absent), var(--excused));
+            opacity: 0.8;
+        }
+        h1, h2 {
+            text-align: center;
+            color: var(--white);
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        h2 {
+            font-size: 1.35rem;
+            color: var(--grey-20);
+            margin-bottom: 24px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        h3 {
+            color: var(--grey-30);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .tab-links {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid var(--grey-70);
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .tab-link {
+            padding: 14px 32px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            border-radius: 12px 12px 0 0;
+            color: var(--grey-40);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.95rem;
+            font-weight: 500;
+            position: relative;
+            top: 2px;
+        }
+        .tab-link:hover {
+            color: var(--grey-20);
+            background: rgba(255,255,255,0.03);
+        }
+        .tab-link.active {
+            color: var(--white);
+            background: var(--grey-75);
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
+        }
+        .tab-content { display: none; }
+        .tab-content.active {
+            display: block;
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        input, button, select {
+            padding: 12px 18px;
+            margin: 6px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        input, select {
+            background: var(--grey-85);
+            color: var(--grey-10);
+            border-color: var(--grey-70);
+        }
+        input:focus, select:focus {
+            border-color: var(--grey-40);
+            box-shadow: 0 0 0 3px rgba(153,153,153,0.15), 0 4px 12px rgba(0,0,0,0.2);
+            background: var(--grey-90);
+        }
+        button {
+            color: var(--white);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+        }
+        button:active { transform: translateY(0); }
+        
+        .btn-present {
+            background: linear-gradient(135deg, var(--present) 0%, var(--present-dark) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .btn-present:hover {
+            background: linear-gradient(135deg, var(--present-light) 0%, var(--present) 100%);
+        }
+        .btn-late {
+            background: linear-gradient(135deg, var(--late) 0%, var(--late-dark) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .btn-late:hover {
+            background: linear-gradient(135deg, var(--late-light) 0%, var(--late) 100%);
+        }
+        .btn-absent {
+            background: linear-gradient(135deg, var(--absent) 0%, var(--absent-dark) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .btn-absent:hover {
+            background: linear-gradient(135deg, var(--absent-light) 0%, var(--absent) 100%);
+        }
+        .btn-excused {
+            background: linear-gradient(135deg, var(--excused) 0%, var(--excused-dark) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .btn-excused:hover {
+            background: linear-gradient(135deg, var(--excused-light) 0%, var(--excused) 100%);
+        }
+        .btn-neutral {
+            background: linear-gradient(135deg, var(--grey-70) 0%, var(--grey-75) 100%);
+        }
+        .btn-neutral:hover {
+            background: linear-gradient(135deg, var(--grey-60) 0%, var(--grey-70) 100%);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-blue-dark) 100%);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #3272d1 0%, var(--accent-blue) 100%);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 24px;
+            background: var(--grey-85);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        th, td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--grey-75);
+        }
+        th {
+            background: linear-gradient(180deg, var(--grey-90) 0%, var(--grey-85) 100%);
+            color: var(--white);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+        tr { transition: all 0.3s ease; }
+        tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+        tr:last-child td { border-bottom: none; }
+        
+        /* ✅ REVERSED: Marked = HIDDEN, Unmarked = VISIBLE */
+        tr.marked-student { display: none; }
+        tr.unmarked-student { display: table-row; }
+        
+        .status-present {
+            color: var(--present-light);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .status-late {
+            color: var(--late-light);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .status-absent {
+            color: var(--absent-light);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .status-excused {
+            color: var(--excused-light);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        .auth-box {
+            max-width: 440px;
+            margin: 60px auto;
+            padding: 40px;
+            background: linear-gradient(180deg, var(--grey-80) 0%, var(--grey-85) 100%);
+            border-radius: 24px;
+            box-shadow:
+                0 20px 60px rgba(0,0,0,0.7),
+                inset 0 1px 0 rgba(255,255,255,0.05);
+            text-align: center;
+            border: 1px solid var(--grey-70);
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--present), var(--late), var(--absent), var(--excused));
+        }
+        .auth-box input {
+            width: 100%;
+            margin: 10px 0;
+            background: var(--grey-90);
+        }
+        .auth-box button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 14px;
+            font-size: 1rem;
+            border-radius: 10px;
+        }
+        .auth-toggle {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--grey-40);
+        }
+        .auth-toggle a {
+            color: var(--grey-20);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .auth-error {
+            margin: 12px 0;
+            padding: 10px;
+            background: rgba(153, 26, 26, 0.2);
+            border-radius: 8px;
+            color: var(--grey-20);
+            font-size: 0.9rem;
+        }
+        .auth-success {
+            margin: 12px 0;
+            padding: 10px;
+            background: rgba(30, 123, 58, 0.2);
+            border-radius: 8px;
+            color: var(--grey-20);
+            font-size: 0.9rem;
+        }
+        
+        .filter-bar, .sort-bar, .auto-mark-bar, .progress-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            align-items: center;
+            margin: 18px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 14px;
+            border: 1px solid var(--grey-75);
+        }
+        .auto-mark-bar {
+            background: rgba(42, 96, 176, 0.08);
+            border-color: var(--excused);
+        }
+        .progress-bar {
+            background: rgba(30, 123, 58, 0.08);
+            border-color: var(--present);
+            justify-content: space-between;
+        }
+        .progress-text { font-weight: 600; color: var(--grey-20); }
+        .date-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .date-group label {
+            color: var(--grey-30);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .print-group {
+            margin-top: 28px;
+            padding-top: 24px;
+            border-top: 1px solid var(--grey-75);
+        }
+        .print-group h4 {
+            margin-bottom: 14px;
+            color: var(--grey-30);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .logout-btn {
+            float: right;
+            background: transparent;
+            border: 1px solid var(--grey-60);
+            box-shadow: none;
+        }
+        .logout-btn:hover {
+            background: var(--grey-80);
+            border-color: var(--grey-40);
+            transform: none;
+        }
+        .user-info {
+            float: left;
+            color: var(--grey-30);
+            padding: 12px 0;
+            font-weight: 500;
+        }
+        .user-info span {
+            color: var(--grey-10);
+            font-weight: 600;
+        }
+        .clearfix { clear: both; }
+        .selected-info {
+            margin: 14px 0;
+            padding: 14px 20px;
+            background: linear-gradient(90deg, rgba(77,77,77,0.2) 0%, transparent 100%);
+            border-radius: 10px;
+            font-size: 0.92em;
+            color: var(--grey-30);
+            border-left: 3px solid var(--grey-50);
+        }
+        label { color: var(--grey-20); font-weight: 500; }
+        p { color: var(--grey-30); }
+        .auth-box h1 { font-size: 1.5rem; margin-bottom: 8px; }
+        .auth-box h3 { margin-top: 8px; }
+        .auto-note {
+            font-size: 0.9rem;
+            color: var(--grey-30);
+            margin-top: 8px;
+        }
+        .select-all-bar {
+            margin: 10px 0;
+            padding: 10px 0;
+        }
+    </style>
+</head>
+<body>
+<!-- AUTHENTICATION SCREEN -->
+<div id="authScreen">
+    <div id="loginForm" class="auth-box">
+        <h1>Student Attendance Monitoring System</h1>
+        <h3>Teacher Login</h3>
+        <div id="loginError" class="auth-error hidden"></div>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button class="btn-primary" onclick="login()">Login</button>
+        <p class="auth-toggle">Don't have an account? <a onclick="showCreateAccount()">Create Account</a></p>
+        <p style="margin-top:12px; font-size:0.85em; color:var(--grey-50);">Default: teacher / 123456</p>
+    </div>
+    
+    <div id="createAccountForm" class="auth-box hidden">
+        <h1>Create New Account</h1>
+        <h3>Teacher Registration</h3>
+        <div id="createError" class="auth-error hidden"></div>
+        <div id="createSuccess" class="auth-success hidden"></div>
+        <input type="text" id="newUsername" placeholder="Choose Username" autocomplete="off">
+        <input type="password" id="newPassword" placeholder="Choose Password">
+        <input type="password" id="confirmPassword" placeholder="Confirm Password">
+        <button class="btn-primary" onclick="createAccount()">Create Account</button>
+        <p class="auth-toggle">Already have an account? <a onclick="showLogin()">Back to Login</a></p>
+    </div>
+</div>
+
+<!-- MAIN SYSTEM -->
+<div id="mainScreen" class="hidden">
+    <div class="container">
+        <h1>Student Attendance Monitoring System</h1>
+        <div class="user-info">Welcome, <span id="currentUsername"></span></div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+        <div class="clearfix"></div>
+        
+        <div class="tab-links">
+            <button class="tab-link active" data-tab="students">Students</button>
+            <button class="tab-link" data-tab="mark">Mark Attendance</button>
+            <button class="tab-link" data-tab="reports">Reports</button>
+        </div>
+        
+        <!-- TAB: STUDENTS -->
+        <div id="studentsTab" class="tab-content active">
+            <h2>Manage Student List</h2>
+            <input type="text" id="newStudentName" placeholder="Enter student name">
+            <button class="btn-neutral" onclick="addStudent()">Add Student</button>
+            <table id="studentsTable">
+                <thead><tr><th>ID</th><th>Name</th><th>Action</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        
+        <!-- TAB: MARK ATTENDANCE -->
+        <div id="markTab" class="tab-content">
+            <h2>Mark Attendance</h2>
+            <label>Date: </label>
+            <input type="date" id="attendanceDate" onchange="loadDayStatus()">
+            <br><br>
+            
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <span class="progress-text">✅ Marked: <span id="markedCount">0</span> / Total: <span id="totalCount">0</span></span>
+                <span class="progress-text">👤 Remaining to mark: <span id="unmarkedCount">0</span></span>
+            </div>
+            
+            <!-- Auto-mark setting -->
+            <div class="auto-mark-bar">
+                <div>
+                    <strong style="color:var(--grey-20);">Unchecked students default to:</strong>
+                    <select id="autoMarkDefault">
+                        <option value="Absent">Absent</option>
+                        <option value="Late">Late</option>
+                        <option value="Excused">Excused</option>
+                    </select>
+                </div>
+                <p class="auto-note">✅ When you save, remaining unchecked will be marked above</p>
+            </div>
+            
+            <!-- Select All -->
+            <div class="select-all-bar">
+                <label style="cursor:pointer;">
+                    <input type="checkbox" id="selectAllCheck" onchange="toggleSelectAll()">
+                    <strong>Select All Remaining</strong>
+                </label>
+            </div>
+            
+            <button class="btn-present" onclick="setBulkStatus('Present')">Mark Selected Present</button>
+            <button class="btn-late" onclick="setBulkStatus('Late')">Mark Selected Late</button>
+            <button class="btn-absent" onclick="setBulkStatus('Absent')">Mark Selected Absent</button>
+            <button class="btn-excused" onclick="setBulkStatus('Excused')">Mark Selected Excused</button>
+            <button class="btn-neutral" onclick="clearAllStatus()">Reset All</button>
+            <button class="btn-primary" onclick="saveAttendance()">✅ Save & Finalize</button>
+            
+            <table id="attendanceTable">
+                <thead><tr><th>Select</th><th>ID</th><th>Name</th><th>Status</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        
+        <!-- TAB: REPORTS -->
+        <div id="reportsTab" class="tab-content">
+            <h2>Attendance Reports</h2>
+            
+            <div class="filter-bar">
+                <div class="date-group">
+                    <label>From:</label>
+                    <input type="date" id="dateFrom">
+                    <label>To:</label>
+                    <input type="date" id="dateTo">
+                </div>
+                <button class="btn-neutral" onclick="applyFilters()">Apply Date Filter</button>
+                <button class="btn-neutral" onclick="clearAllFilters()">Clear All</button>
+            </div>
+            
+            <div class="selected-info" id="selectionInfo">Showing all records</div>
+            
+            <input type="text" id="searchInput" placeholder="Search by name">
+            <button class="btn-neutral" onclick="applyFilters()">Search</button>
+            
+            <div class="sort-bar">
+                <strong style="color:var(--grey-20);">Filter & Sort:</strong>
+                <select id="statusFilter" onchange="applyFilters()">
+                    <option value="all">All Status</option>
+                    <option value="Present">Present Only</option>
+                    <option value="Late">Late Only</option>
+                    <option value="Absent">Absent Only</option>
+                    <option value="Excused">Excused Only</option>
+                </select>
+                <select id="sortBy" onchange="applyFilters()">
+                    <option value="name-asc">Name (A → Z)</option>
+                    <option value="name-desc">Name (Z → A)</option>
+                    <option value="date-asc">Date (Oldest → Newest)</option>
+                    <option value="date-desc" selected>Date (Newest → Oldest)</option>
+                    <option value="status-asc">Status (Present→Late→Absent→Excused)</option>
+                    <option value="status-desc">Status (Excused→Absent→Late→Present)</option>
+                </select>
+            </div>
+            
+            <div class="print-group">
+                <h4>Print Current Selection:</h4>
+                <button class="btn-present" onclick="printByCategory('Present')">Print Present</button>
+                <button class="btn-late" onclick="printByCategory('Late')">Print Late</button>
+                <button class="btn-absent" onclick="printByCategory('Absent')">Print Absent</button>
+                <button class="btn-excused" onclick="printByCategory('Excused')">Print Excused</button>
+                <button class="btn-neutral" onclick="printReport()">Print All Shown</button>
+            </div>
+            
+            <table id="reportsTable">
+                <thead><tr><th>Name</th><th>Date</th><th>Status</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+const DB_KEYS = {
+    users: 'attendance_teachers',
+    dataPrefix: 'attendance_data_'
+};
+
+let currentUser = null;
+
+function initDB() {
+    if (!localStorage.getItem(DB_KEYS.users)) {
+        localStorage.setItem(DB_KEYS.users, JSON.stringify([
+            { username: 'teacher', password: '123456' }
+        ]));
+    }
+    document.getElementById('attendanceDate').valueAsDate = new Date();
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dateFrom').value = today;
+    document.getElementById('dateTo').value = today;
+}
+
+function getUsers() { return JSON.parse(localStorage.getItem(DB_KEYS.users)) || []; }
+function saveUsers(users) { localStorage.setItem(DB_KEYS.users, JSON.stringify(users)); }
+
+function getUserDB(key) {
+    if (!currentUser) return [];
+    const prefixedKey = DB_KEYS.dataPrefix + currentUser + '_' + key;
+    return JSON.parse(localStorage.getItem(prefixedKey)) || [];
+}
+function setUserDB(key, data) {
+    if (!currentUser) return;
+    const prefixedKey = DB_KEYS.dataPrefix + currentUser + '_' + key;
+    localStorage.setItem(prefixedKey, JSON.stringify(data));
+}
+
+function showCreateAccount() {
+    document.getElementById('loginForm').classList.add('hidden');
+    document.getElementById('createAccountForm').classList.remove('hidden');
+    hideAuthMessages();
+}
+function showLogin() {
+    document.getElementById('createAccountForm').classList.add('hidden');
+    document.getElementById('loginForm').classList.remove('hidden');
+    hideAuthMessages();
+}
+function hideAuthMessages() {
+    document.getElementById('loginError').classList.add('hidden');
+    document.getElementById('createError').classList.add('hidden');
+    document.getElementById('createSuccess').classList.add('hidden');
+}
+
+function createAccount() {
+    const user = document.getElementById('newUsername').value.trim();
+    const pass = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    const errorEl = document.getElementById('createError');
+    const successEl = document.getElementById('createSuccess');
+    
+    hideAuthMessages();
+    
+    if (!user || !pass) {
+        errorEl.textContent = 'Please fill in all fields';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+    if (user.length < 3) {
+        errorEl.textContent = 'Username must be at least 3 characters';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+    if (pass.length < 4) {
+        errorEl.textContent = 'Password must be at least 4 characters';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+    if (pass !== confirm) {
+        errorEl.textContent = 'Passwords do not match';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+    
+    const users = getUsers();
+    if (users.some(u => u.username.toLowerCase() === user.toLowerCase())) {
+        errorEl.textContent = 'Username already taken';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+    
+    users.push({ username: user, password: pass });
+    saveUsers(users);
+    
+    successEl.textContent = 'Account created successfully! You can now login.';
+    successEl.classList.remove('hidden');
+    
+    document.getElementById('newUsername').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    
+    setTimeout(showLogin, 1500);
+}
+
+function login() {
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value.trim();
+    const errorEl = document.getElementById('loginError');
+    
+    hideAuthMessages();
+    
+    const users = getUsers();
+    const found = users.find(x => x.username === u && x.password === p);
+    
+    if (found) {
+        currentUser = u;
+        document.getElementById('authScreen').classList.add('hidden');
+        document.getElementById('mainScreen').classList.remove('hidden');
+        document.getElementById('currentUsername').textContent = u;
+        loadStudents();
+        loadAttendanceList();
+        loadAllRecords();
+    } else {
+        errorEl.textContent = 'Invalid username or password';
+        errorEl.classList.remove('hidden');
+    }
+}
+
+function logout() {
+    currentUser = null;
+    document.getElementById('mainScreen').classList.add('hidden');
+    document.getElementById('authScreen').classList.remove('hidden');
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    showLogin();
+}
+
+document.querySelectorAll('.tab-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-link').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+        if (btn.dataset.tab === 'mark') loadAttendanceList();
+    });
+});
+
+function loadStudents() {
+    const students = getUserDB('students');
+    const tbody = document.querySelector('#studentsTable tbody');
+    tbody.innerHTML = '';
+    students.forEach(s => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${s.id}</td>
+                <td>${s.name}</td>
+                <td><button class="btn-absent" onclick="deleteStudent(${s.id})">Delete</button></td>
+            </tr>`;
+    });
+}
+function addStudent() {
+    const name = document.getElementById('newStudentName').value.trim();
+    if (!name) return alert('Please enter a name');
+    const students = getUserDB('students');
+    if (students.some(s => s.name === name)) return alert('Student already exists');
+    const newId = students.length ? Math.max(...students.map(s => s.id)) + 1 : 1;
+    students.push({ id: newId, name });
+    setUserDB('students', students);
+    document.getElementById('newStudentName').value = '';
+    loadStudents(); loadAttendanceList();
+}
+function deleteStudent(id) {
+    if (!confirm('Delete this student?')) return;
+    let students = getUserDB('students').filter(s => s.id !== id);
+    let records = getUserDB('records').filter(r => r.studentId !== id);
+    setUserDB('students', students);
+    setUserDB('records', records);
+    loadStudents(); loadAttendanceList(); loadAllRecords();
+}
+
+// --- ATTENDANCE MARKING ---
+let dayStatus = {}; // holds { studentId: status } for current date
+
+function loadAttendanceList() {
+    const date = document.getElementById('attendanceDate').value;
+    const students = getUserDB('students');
+    dayStatus = {};
+    
+    // Load existing status for this date
+    const records = getUserDB('records').filter(r => r.date === date);
+    records.forEach(r => {
+        dayStatus[r.studentId] = r.status;
+    });
+    
+    const tbody = document.querySelector('#attendanceTable tbody');
+    tbody.innerHTML = '';
+    
+    students.forEach(s => {
+        const status = dayStatus[s.id] || '';
+        const isMarked = !!status;
+        tbody.innerHTML += `
+            <tr data-id="${s.id}" class="${isMarked ? 'marked-student' : 'unmarked-student'}">
+                <td><input type="checkbox" class="att-check"></td>
+                <td>${s.id}</td>
+                <td>${s.name}</td>
+                <td class="att-status">${status ? `<span class="status-${status.toLowerCase()}">${status}</span>` : ''}</td>
+            </tr>`;
+    });
+    
+    updateProgress();
+    document.getElementById('selectAllCheck').checked = false;
+}
+
+function loadDayStatus() {
+    loadAttendanceList();
+}
+
+function updateProgress() {
+    const total = document.querySelectorAll('#attendanceTable tbody tr').length;
+    const marked = document.querySelectorAll('#attendanceTable tbody tr.marked-student').length;
+    const unmarked = total - marked;
+    document.getElementById('totalCount').textContent = total;
+    document.getElementById('markedCount').textContent = marked;
+    document.getElementById('unmarkedCount').textContent = unmarked;
+}
+
+function toggleSelectAll() {
+    const isChecked = document.getElementById('selectAllCheck').checked;
+    // Only select visible (unmarked) rows
+    document.querySelectorAll('#attendanceTable tbody tr.unmarked-student .att-check').forEach(cb => {
+        cb.checked = isChecked;
+    });
+}
+
+function setBulkStatus(status) {
+    document.querySelectorAll('#attendanceTable tbody tr.unmarked-student').forEach(row => {
+        if (row.querySelector('.att-check').checked) {
+            const sid = parseInt(row.dataset.id);
+            dayStatus[sid] = status;
+            // Hide this row — marked students disappear
+            row.classList.remove('unmarked-student');
+            row.classList.add('marked-student');
+            row.querySelector('.att-status').innerHTML = `<span class="status-${status.toLowerCase()}">${status}</span>`;
+            row.querySelector('.att-check').checked = false;
+        }
+    });
+    document.getElementById('selectAllCheck').checked = false;
+    updateProgress();
+}
+
+function clearAllStatus() {
+    if (!confirm('Reset all attendance for today? This will show everyone again.')) return;
+    dayStatus = {};
+    loadAttendanceList();
+}
+
+function saveAttendance() {
+    const date = document.getElementById('attendanceDate').value;
+    if (!date) return alert('Please select a date');
+    
+    const defaultStatus = document.getElementById('autoMarkDefault').value;
+    let records = getUserDB('records');
+    records = records.filter(r => r.date !== date);
+    
+    let manuallyMarked = 0;
+    let autoMarked = 0;
+    
+    document.querySelectorAll('#attendanceTable tbody tr').forEach(row => {
+        const sid = parseInt(row.dataset.id);
+        let status = dayStatus[sid];
+        
+        if (!status) {
+            status = defaultStatus;
+            autoMarked++;
+        } else {
+            manuallyMarked++;
+        }
+        
+        records.push({
+            studentId: sid,
+            date: date,
+            status: status
+        });
+    });
+    
+    setUserDB('records', records);
+    
+    alert(`✅ Saved!\n📋 Manually marked: ${manuallyMarked}\n🤖 Auto-marked ${defaultStatus}: ${autoMarked}`);
+    
+    loadAllRecords();
+    loadAttendanceList();
+}
+
+// --- REPORTS ---
+function getStatusOrder(status) {
+    const order = { 'Present': 1, 'Late': 2, 'Absent': 3, 'Excused': 4 };
+    return order[status] || 0;
+}
+
+let filteredRecords = [];
+
+function applyFilters() {
+    const students = getUserDB('students');
+    let records = getUserDB('records');
+    
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    if (dateFrom && dateTo) {
+        records = records.filter(r => r.date >= dateFrom && r.date <= dateTo);
+    } else if (dateFrom) {
+        records = records.filter(r => r.date === dateFrom);
+    } else if (dateTo) {
+        records = records.filter(r => r.date === dateTo);
+    }
+    
+    updateSelectionInfo(dateFrom, dateTo, records.length);
+    
+    const kw = document.getElementById('searchInput').value.trim().toLowerCase();
+    if (kw) {
+        records = records.filter(r => {
+            const name = (students.find(s => s.id === r.studentId)?.name || '').toLowerCase();
+            return name.includes(kw);
+        });
+    }
+    
+    const statusFilter = document.getElementById('statusFilter').value;
+    if (statusFilter !== 'all') {
+        records = records.filter(r => r.status === statusFilter);
+    }
+    
+    const sortBy = document.getElementById('sortBy').value;
+    records.sort((a, b) => {
+        const nameA = (students.find(s => s.id === a.studentId)?.name || '').toLowerCase();
+        const nameB = (students.find(s => s.id === b.studentId)?.name || '').toLowerCase();
+        switch (sortBy) {
+            case 'name-asc': return nameA.localeCompare(nameB);
+            case 'name-desc': return nameB.localeCompare(nameA);
+            case 'date-asc': return a.date.localeCompare(b.date);
+            case 'date-desc': return b.date.localeCompare(a.date);
+            case 'status-asc': return getStatusOrder(a.status) - getStatusOrder(b.status);
+            case 'status-desc': return getStatusOrder(b.status) - getStatusOrder(a.status);
+            default: return 0;
+        }
+    });
+    
+    filteredRecords = records;
+    displayRecords(records);
+}
+
+function updateSelectionInfo(from, to, count) {
+    const infoEl = document.getElementById('selectionInfo');
+    if (!from && !to) {
+        infoEl.textContent = 'Showing all records';
+    } else if (from && to && from === to) {
+        infoEl.textContent = `Selected date: ${from} — ${count} record(s) found`;
+    } else if (from && to) {
+        infoEl.textContent = `Date range: ${from} to ${to} — ${count} record(s) found`;
+    } else if (from) {
+        infoEl.textContent = `From: ${from} — ${count} record(s) found`;
+    } else {
+        infoEl.textContent = `To: ${to} — ${count} record(s) found`;
+    }
+}
+
+function loadAllRecords() {
+    document.getElementById('searchInput').value = '';
+    applyFilters();
+}
+
+function clearAllFilters() {
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('statusFilter').value = 'all';
+    applyFilters();
+}
+
+function displayRecords(records) {
+    const students = getUserDB('students');
+    const tbody = document.querySelector('#reportsTable tbody');
+    tbody.innerHTML = '';
+    records.forEach(r => {
+        const name = students.find(s => s.id === r.studentId)?.name || 'Unknown';
+        tbody.innerHTML += `
+            <tr>
+                <td>${name}</td>
+                <td>${r.date}</td>
+                <td class="status-${r.status.toLowerCase()}">${r.status}</td>
+            </tr>`;
+    });
+}
+
+// --- PRINT ---
+function generatePrintContent(title, records, dateNote) {
+    const students = getUserDB('students');
+    const rows = records.map(r => {
+        const name = students.find(s => s.id === r.studentId)?.name || 'Unknown';
+        const color = r.status === 'Present' ? '#1e7b3a' : 
+                      r.status === 'Late' ? '#b36b00' : 
+                      r.status === 'Absent' ? '#991a1a' : '#2a60b0';
+        return `<tr>
+            <td>${name}</td>
+            <td>${r.date}</td>
+            <td style="font-weight:bold; color:${color}">${r.status}</td>
+        </tr>`;
+    }).join('');
+    
+    return `
+        <html>
+        <head>
+            <title>${title}</title>
+            <style>
+                * { font-family: 'Segoe UI', Arial, sans-serif; }
+                body { background: #fff; color: #000; padding: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #000; padding: 10px; text-align: left; }
+                th { background: #e6e6e6; font-weight: bold; }
+                h2 { text-align: center; color: #000; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+                .note { margin: 15px 0; padding: 10px; background: #f2f2f2; border: 1px solid #ddd; }
+            </style>
+        </head>
+        <body>
+            <h2>${title}</h2>
+            <div class="note">
+                <p><strong>Teacher:</strong> ${currentUser}</p>
+                <p><strong>Date Selection:</strong> ${dateNote}</p>
+                <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+                <p><strong>Total Records:</strong> ${records.length}</p>
+            </div>
+            <table>
+                <thead><tr><th>Student Name</th><th>Date</th><th>Status</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </body>
+        </html>
+    `;
+}
+
+function getDateSelectionNote() {
+    const from = document.getElementById('dateFrom').value;
+    const to = document.getElementById('dateTo').value;
+    if (!from && !to) return 'All dates';
+    if (from && to && from === to) return from;
+    if (from && to) return `${from} to ${to}`;
+    return (from || to);
+}
+
+function printReport() {
+    const win = window.open('', '', 'width=800,height=600');
+    win.document.write(generatePrintContent('STUDENT ATTENDANCE REPORT - SELECTED', filteredRecords, getDateSelectionNote()));
+    win.document.close();
+    win.print();
+}
+
+function printByCategory(category) {
+    const filtered = filteredRecords.filter(r => r.status === category);
+    const win = window.open('', '', 'width=800,height=600');
+    win.document.write(generatePrintContent(`ATTENDANCE REPORT - ${category.toUpperCase()}`, filtered, getDateSelectionNote()));
+    win.document.close();
+    win.print();
+}
+
+initDB();
+</script>
+</body>
+</html>
